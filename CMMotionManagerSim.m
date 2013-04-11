@@ -151,24 +151,39 @@
 		// parse the data, no error handling!
 		NSArray *components = [data componentsSeparatedByString:@","];
 		
-		// create our own acceleration object
-		[accelerometerData init:[[components objectAtIndex:1] doubleValue]
-                                   X:[[components objectAtIndex:2] doubleValue]
-								   Y:[[components objectAtIndex:3] doubleValue]
-								   Z:[[components objectAtIndex:4] doubleValue]];
-      
-        if (accelHandler && accelOn) {
-            accelHandler(accelerometerData, nil);
-        }
+        NSString *type = [[components objectAtIndex:0] retain];
         
-        if (gyroHandler && gyroOn) {
-            gyroHandler(gyroData, nil);
-        }
-        
-        if (magHandler && magOn) {
-            magHandler(magnetometerData, nil);
-        }
+        if (([type isEqualToString:@"ACC: 0"]) && accelHandler && accelOn){
             
+            [accelerometerData init:[[components objectAtIndex:1] doubleValue]
+                                  X:[[components objectAtIndex:2] doubleValue]
+                                  Y:[[components objectAtIndex:3] doubleValue]
+                                  Z:[[components objectAtIndex:4] doubleValue]];
+            
+            accelHandler(accelerometerData, nil);
+            
+        }
+        else if (([type isEqualToString:@"GYRO: 0"]) && gyroHandler && gyroOn){
+            
+            [gyroData init:[[components objectAtIndex:1] doubleValue]
+                                  X:[[components objectAtIndex:2] doubleValue]
+                                  Y:[[components objectAtIndex:3] doubleValue]
+                                  Z:[[components objectAtIndex:4] doubleValue]];
+            
+            gyroHandler(gyroData, nil);
+            
+        }
+        else if (([type isEqualToString:@"MAG: 0"]) && magHandler && magOn){
+            
+            [magnetometerData init:[[components objectAtIndex:1] doubleValue]
+                                  X:[[components objectAtIndex:2] doubleValue]
+                                  Y:[[components objectAtIndex:3] doubleValue]
+                                  Z:[[components objectAtIndex:4] doubleValue]];
+            
+            magHandler(magnetometerData, nil);
+            
+        }
+        else {  }
     }
 }
 
