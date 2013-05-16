@@ -84,7 +84,7 @@
 
 @end
 
-@implementation CMMotionManagerSim  
+@implementation CMMotionManager (Simulation)  
 
 // this is straight from developer guide example for multi-threaded notifications
 - (void) setUpThreadingSupport {
@@ -260,3 +260,5 @@
 @end
 
 #endif
+
+

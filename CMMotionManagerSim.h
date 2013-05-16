@@ -9,12 +9,12 @@
  *
  */
 #import <TargetConditionals.h>
+#import <UIKit/UIKit.h>
+#import <CoreMotion/CoreMotion.h>
 
 // when compiling to ARM (iPhone device), hide everything and use system defaults
 // if you wish to use simulation mode even on the device, remove the #if/#endif
 #if !TARGET_CPU_ARM
-#import <UIKit/UIKit.h>
-#import <CoreMotion/CoreMotion.h>
 
 @interface CMAccelerationSimulation: CMAccelerometerData
 {
@@ -57,7 +57,7 @@
 
 @end
 
-@interface CMMotionManagerSim : CMMotionManager <NSMachPortDelegate>
+@interface CMMotionManager (Simulation) <NSMachPortDelegate>
 {
 
 	//CFSocketRef udpSocket;
@@ -99,12 +99,5 @@
 - (BOOL) isGyroActive;
 
 @end
-
-#else
-
-@interface CMMotionManagerSim : CMMotionManager
-{
-    
-}
 
 #endif
