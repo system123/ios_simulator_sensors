@@ -66,6 +66,48 @@
 }
 @end
 
+
+@implementation CMAttitudeSimulation
+
+@synthesize timestamp;
+@synthesize roll;
+@synthesize pitch;
+@synthesize yaw;
+
+-(CMAttitudeSimulation*)init:(NSTimeInterval)aTimeStamp pitch:(double)pitch yaw:(double)yaw roll:(double)roll
+{
+	self.timestamp = aTimeStamp;
+	self.pitch = pitch;
+    self.yaw = yaw;
+    self.roll = roll;
+    
+	return self;
+}
+@end
+
+
+@implementation CMDeviceMotionSimulation
+
+@synthesize timestamp;
+@synthesize attitude;
+@synthesize gravity;
+@synthesize magneticField;
+@synthesize rotationRate;
+@synthesize userAcceleration;
+
+-(CMDeviceMotionSimulation*)init:(NSTimeInterval)aTimeStamp rot:(CMRotationSimulation*)rot att:(CMAttitudeSimulation*)att acc:(CMAccelerationSimulation*)acc
+{
+	self.timestamp = aTimeStamp;
+    rotationRate = rot.rotationRate;
+	userAcceleration = acc.acceleration;
+    attitude = att;
+    
+	return self;
+}
+@end
+
+
+
 @implementation CMMotionManager (Simulation)
 
 // override the static method and return our simulated version instead
@@ -81,10 +123,20 @@
 - (BOOL) isMagnetometerAvailable{
     return YES;
 }
+- (BOOL) isDeviceMotionAvailable{
+    return YES;
+}
 
 @end
 
-@implementation CMMotionManager (Simulation)  
+@implementation CMMotionManagerSim : CMMotionManager
+
+@synthesize attData;
+@synthesize deviceData;
+@synthesize accelerometerData;
+@synthesize gyroData;
+@synthesize deviceMotion;
+
 
 // this is straight from developer guide example for multi-threaded notifications
 - (void) setUpThreadingSupport {
@@ -116,6 +168,14 @@
 - (void)startMagnetometerUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMMagnetometerHandler)handler {
     magHandler = [handler copy];
     magOn = true;
+}
+
+- (void)startDeviceMotionUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMDeviceMotionHandler)handler {
+    deviceHandler = [handler copy];
+    accelOn = true;
+    gyroOn=true;
+    magOn=true;
+    deviceOn = true;
 }
 
 - (BOOL) isMagnetometerActive {
@@ -183,6 +243,33 @@
             magHandler(magnetometerData, nil);
             
         }
+        else if (([type isEqualToString:@"DEV: 0"]) && deviceHandler && deviceOn){
+            
+            [accelerometerData init:[[components objectAtIndex:1] doubleValue]
+                                  X:[[components objectAtIndex:2] doubleValue]
+                                  Y:[[components objectAtIndex:3] doubleValue]
+                                  Z:[[components objectAtIndex:4] doubleValue]];
+            
+
+            [gyroData init:[[components objectAtIndex:1] doubleValue]
+                         X:[[components objectAtIndex:5] doubleValue]
+                         Y:[[components objectAtIndex:6] doubleValue]
+                         Z:[[components objectAtIndex:7] doubleValue]];
+            
+            [attData init:[[components objectAtIndex:1] doubleValue]
+                         pitch:[[components objectAtIndex:8] doubleValue]
+                         yaw:[[components objectAtIndex:9] doubleValue]
+                         roll:[[components objectAtIndex:10] doubleValue]];
+            
+            [deviceData init:[[components objectAtIndex:1] doubleValue]
+                         rot:gyroData
+                         att:attData
+                         acc:accelerometerData];
+            deviceHandler(deviceData, nil);
+            
+
+            
+        }
         else {  }
     }
 }
@@ -224,6 +311,9 @@
 {
     [super init];
 	accelerometerData = [CMAccelerationSimulation alloc];
+    gyroData = [CMRotationSimulation alloc];
+    attData = [CMAttitudeSimulation alloc];
+    deviceData = [CMDeviceMotionSimulation alloc];
 	isExiting = false;
     gyroOn = magOn = accelOn = NO;
 	

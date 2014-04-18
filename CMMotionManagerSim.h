@@ -41,10 +41,53 @@
     NSTimeInterval timestamp;
 	CMRotationRate rotationRate;
 }
+
 @property(readwrite, nonatomic) CMRotationRate rotationRate;
 @property (readwrite, nonatomic) NSTimeInterval timestamp;
 
 @end
+
+struct SAttitude {
+    double roll;
+    double pitch;
+    double yaw;
+};
+
+typedef struct SAttitude SAttitude;
+@interface CMAttitudeSimulation: CMAttitude
+{
+    NSTimeInterval timestamp;
+    double roll;
+    double pitch;
+    double yaw;
+}
+
+@property(readwrite, nonatomic) double roll;
+@property(readwrite, nonatomic) double pitch;
+@property(readwrite, nonatomic) double yaw;
+@property (readwrite, nonatomic) NSTimeInterval timestamp;
+
+@end
+
+
+@interface CMDeviceMotionSimulation: CMDeviceMotion
+{
+    NSTimeInterval timestamp;
+    CMAttitude *attitude;
+    CMAcceleration gravity;
+	CMCalibratedMagneticField magneticField;
+    CMRotationRate rotationRate;
+    CMAcceleration userAcceleration;
+   
+}
+@property (readwrite, nonatomic) NSTimeInterval timestamp;
+@property(readonly, nonatomic) CMAttitude *attitude;
+@property(readonly, nonatomic) CMAcceleration gravity;
+@property(readwrite, nonatomic) CMCalibratedMagneticField magneticField;
+@property(readonly, nonatomic) CMRotationRate rotationRate;
+@property(readonly, nonatomic) CMAcceleration userAcceleration;
+@end
+
 
 @interface CMMotionManager (Simulation)
 @property(readonly, nonatomic, getter=isAccelerometerAvailable) BOOL accelerometerAvailable;
@@ -54,23 +97,25 @@
 - (BOOL) isAccelerometerAvailable;
 - (BOOL) isGyroAvailable;
 - (BOOL) isMagnetometerAvailable;
-
+- (BOOL) isDeviceMotionAvailable;
 @end
 
-@interface CMMotionManager (Simulation) <NSMachPortDelegate>
+@interface CMMotionManagerSim : CMMotionManager <NSMachPortDelegate>
 {
 
 	//CFSocketRef udpSocket;
 	int udpSocket;
     
-    BOOL gyroOn, accelOn, magOn;
+    BOOL gyroOn, accelOn, magOn, deviceOn;
     
 	NSThread *thread;
 	BOOL isExiting;
 	CMAccelerationSimulation *accelerometerData;
     CMRotationSimulation *gyroData;
     CMMagneticSimulation *magnetometerData;
-
+    CMAttitudeSimulation *attData;
+    CMDeviceMotionSimulation *deviceData;
+    
     // Threaded notification support 
     NSMutableArray *notifications;
     NSThread *notificationThread;
@@ -79,15 +124,20 @@
     __block CMAccelerometerHandler accelHandler;
     __block CMGyroHandler gyroHandler;
     __block CMMagnetometerHandler magHandler;
+    __block CMDeviceMotionHandler deviceHandler;
 }
 
 @property(readwrite, assign) CMAccelerationSimulation *accelerometerData;
 @property(readwrite, assign) CMRotationSimulation *gyroData;
 @property(readwrite, assign) CMMagneticSimulation *magnetometerData;
+@property(readwrite, assign) CMAttitudeSimulation *attData;
+@property(readwrite, assign) CMDeviceMotionSimulation *deviceData;
+
 
 - (void)startAccelerometerUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMAccelerometerHandler)handler;
 - (void)startGyroUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMGyroHandler)handler;
 - (void)startMagnetometerUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMMagnetometerHandler)handler;
+- (void)startDeviceMotionUpdatesToQueue:(NSOperationQueue *)queue withHandler:(CMDeviceMotionHandler)handler;
 
 - (void) setUpThreadingSupport;
 - (void) handleMachMessage:(void *) msg;
